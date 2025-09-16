@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SanMind — Emotional Support Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#0b1220;--panel:#101826;--muted:#73809b;--card:#0f172a;--border:#1e293b;
+      --primary:#4f7cff;--accent:#22d3ee;--good:#10b981;--warn:#f59e0b;--bad:#ef4444;--text:#e5e7eb;
+      --radius:14px;--shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(120deg,#0b1220 0%,#0b1528 50%,#0b1220 100%);color:var(--text)}
+    a{color:var(--accent);text-decoration:none}
+    .app{max-width:1200px;margin:0 auto;padding:20px;display:grid;gap:18px}
+    header{display:flex;gap:14px;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:42px;height:42px;border-radius:12px;background:radial-gradient(120px 60px at 30% 30%,var(--accent),transparent 60%),radial-gradient(120px 80px at 70% 70%,var(--primary),transparent 60%),#0e1726;border:1px solid var(--border);box-shadow:var(--shadow)}
+    h1{font-size:20px;line-height:1.2;margin:0}
+    .tag{font-size:12px;color:var(--muted)}
+    .toolbar{display:flex;gap:10px;align-items:center}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--panel);padding:8px 12px;border-radius:999px;font-size:12px}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px rgba(245,158,11,.15)}
+    .dot.online{background:var(--good);box-shadow:0 0 0 4px rgba(16,185,129,.15)}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .chat{display:flex;flex-direction:column;min-height:70vh}
+    .chat-header{padding:14px 16px;border-bottom:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center}
+    .chat-title{display:flex;gap:10px;align-items:center}
+    .avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--accent))}
+    .chat-body{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+    .msg{max-width:80%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);line-height:1.4;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+    .msg.bot{background:rgba(79,124,255,.07)}
+    .msg.user{align-self:flex-end;background:rgba(255,255,255,.03)}
+    .meta{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px;margin-top:6px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+    .chip{font-size:11px;border:1px solid var(--border);padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.03)}
+    .composer{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;padding:14px;border-top:1px dashed var(--border)}
+    .input{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);outline:none}
+    .btn{padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(79,124,255,.25),rgba(79,124,255,.15));color:#eaf0ff;cursor:pointer}
+    .btn:hover{filter:brightness(1.1)}
+    .btn.secondary{background:rgba(255,255,255,.04)}
+    .side{display:flex;flex-direction:column;gap:16px}
+    .card{padding:14px 16px}
+    .card h3{margin:0 0 10px 0;font-size:14px;color:#d8def0;letter-spacing:.3px}
+    .rows{display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;justify-content:space-between;gap:8px;border:1px dashed var(--border);border-radius:10px;padding:10px}
+    .badge{padding:2px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03);font-size:12px}
+    .emotion{font-weight:600}
+    .kpi{display:flex;gap:10px;align-items:center}
+    .kpi strong{font-size:18px}
+    .bar{height:6px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+    .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--primary))}
+    .help{font-size:12px;color:var(--muted)}
+    .disclaimer{font-size:12px;color:var(--muted);border-top:1px dashed var(--border);padding-top:10px;margin-top:8px}
+    .typing{display:none;gap:6px;align-items:center;color:var(--muted);font-size:12px}
+    .typing.active{display:flex}
+    .dot3{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.6;animation:b 1.2s infinite}
+    .dot3:nth-child(2){animation-delay:.15s}.dot3:nth-child(3){animation-delay:.3s}
+    @keyframes b{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-4px);opacity:1}}
+    footer{text-align:center;color:var(--muted);font-size:12px;padding:10px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .taglist{display:flex;gap:8px;flex-wrap:wrap}
+    .taglist .badge{background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.25)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    canvas{image-rendering:crisp-edges}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>SanMind</h1>
+          <div class="tag">Understanding Emotions, Empowering Minds</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="pill" id="pill-health"><span class="dot" id="health-dot"></span> <span id="health-text">Checking API…</span></div>
+        <div class="pill">v0.1 Demo</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Chat Panel -->
+      <section class="panel chat" aria-label="Chat">
+        <div class="chat-header">
+          <div class="chat-title">
+            <div class="avatar" aria-hidden="true"></div>
+            <div>
+              <div><strong>SanMind Assistant</strong></div>
+              <div class="help">Evidence-informed, not a medical device.</div>
+            </div>
+          </div>
+          <div class="typing" id="typing">
+            <div class="dot3"></div><div class="dot3"></div><div class="dot3"></div>
+            <span>SanMind is thinking…</span>
+          </div>
+        </div>
+
+        <div id="messages" class="chat-body" role="log" aria-live="polite" aria-relevant="additions">
+          <div class="msg bot">
+            Hi, I’m SanMind. How are you feeling today?
+            <div class="meta"><span class="badge">tip</span><span>Share a sentence or two — I’ll reflect back with support.</span></div>
+          </div>
+        </div>
+
+        <form class="composer" id="composer" autocomplete="off">
+          <input id="text" class="input" name="text" placeholder="Type how you're feeling…" minlength="2" required />
+          <button class="btn secondary" type="button" id="micBtn">🎙️ Mic</button>
+          <button class="btn secondary" type="button" id="clear">Clear</button>
+          <button class="btn" type="submit">Send ▸</button>
+        </form>
+      </section>
+
+      <!-- Side Panel -->
+      <aside class="side">
+        <div class="panel card">
+          <h3>Status</h3>
+          <div class="rows">
+            <div class="row">
+              <span>Backend</span>
+              <span class="badge mono" id="backend-status">unknown</span>
+            </div>
+            <div class="row">
+              <span>Latency</span>
+              <span class="badge mono" id="latency">—</span>
+            </div>
+          </div>
+          <div class="disclaimer">
+            If you’re in immediate danger or crisis, contact local emergency services or helplines.
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Detected Emotion</h3>
+          <div class="rows">
+            <div class="row">
+              <span class="emotion" id="emo">—</span>
+              <span class="badge" id="conf">—</span>
+            </div>
+            <div class="row">
+              <div class="kpi"><strong id="confNum">0%</strong><span class="help">confidence</span></div>
+              <div class="bar" style="width:55%"><i id="bar" style="width:0%"></i></div>
+            </div>
+          </div>
+          <div class="taglist" id="crisisTags" style="margin-top:10px"></div>
+        </div>
+
+        <div class="panel card">
+          <h3>Quick Emotions</h3>
+          <div class="grid-2">
+            <button class="btn secondary" data-prompt="I feel overwhelmed and stressed about deadlines.">Stress</button>
+            <button class="btn secondary" data-prompt="I am so happy and excited about my progress!">Joy</button>
+            <button class="btn secondary" data-prompt="I feel angry about what happened today.">Anger</button>
+            <button class="btn secondary" data-prompt="I feel scared and anxious lately.">Fear</button>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Mood History</h3>
+          <div class="rows" style="gap:12px">
+            <div class="row" style="align-items:center">
+              <span>Last 20 entries</span>
+              <span class="badge"><button class="btn secondary" type="button" id="clearHistory">Clear History</button></span>
+            </div>
+            <canvas id="moodChart" width="380" height="180" style="width:100%;border:1px dashed var(--border);border-radius:10px;background:rgba(255,255,255,.02)"></canvas>
+          </div>
+          <div class="help" style="margin-top:8px">Stored locally on your browser (no server storage).</div>
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      © <span id="year"></span> SanMind — Student demo. Not medical advice.
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const messagesEl = document.getElementById("messages");
+    const formEl = document.getElementById("composer");
+    const inputEl = document.getElementById("text");
+    const typingEl = document.getElementById("typing");
+    const healthDot = document.getElementById("health-dot");
+    const healthText = document.getElementById("health-text");
+    const backendStatus = document.getElementById("backend-status");
+    const latencyEl = document.getElementById("latency");
+    const emoEl = document.getElementById("emo");
+    const confEl = document.getElementById("conf");
+    const confNumEl = document.getElementById("confNum");
+    const barEl = document.getElementById("bar");
+    const crisisTags = document.getElementById("crisisTags");
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // --- Mood history (localStorage) ---
+    const LS_KEY = "sanmind_history_v1";
+    let history = []; // { t: ISO, emotion: 'joy'|..., conf: 0..1 }
+    const emotionScore = { joy: 2, neutral: 0, stress: -1, fear: -2, anger: -2, sadness: -2 };
+
+    function loadHistory(){
+      try { history = JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { history = []; }
+    }
+    function saveHistory(){ localStorage.setItem(LS_KEY, JSON.stringify(history.slice(-50))); }
+    function pushHistory(emotion, conf){
+      history.push({ t: new Date().toISOString(), emotion, conf: conf || 0 });
+      if (history.length > 50) history = history.slice(-50);
+      saveHistory();
+      drawChart();
+    }
+
+    function addMsg(text, who="bot"){
+      const wrap = document.createElement("div");
+      wrap.className = "msg " + (who === "user" ? "user" : "bot");
+      wrap.textContent = text;
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return wrap;
+    }
+
+    function setHealth(ok){
+      healthDot.classList.toggle("online", !!ok);
+      healthText.textContent = ok ? "Online" : "Offline";
+      backendStatus.textContent = ok ? "online" : "offline";
+    }
+
+    async function checkHealth(){
+      try{
+        const t0 = performance.now();
+        const r = await fetch(API_BASE + "/health");
+        const t1 = performance.now();
+        latencyEl.textContent = Math.max(1, Math.round(t1 - t0)) + " ms";
+        setHealth(r.ok);
+      }catch(e){
+        setHealth(false);
+        latencyEl.textContent = "—";
+      }
+    }
+
+    function setEmotion(emotion, conf){
+      emoEl.textContent = (emotion || "—").toUpperCase();
+      const pct = Math.round((conf || 0)*100);
+      confEl.textContent = pct + "%";
+      confNumEl.textContent = pct + "%";
+      barEl.style.width = pct + "%";
+      const color = emotion === "joy" ? "var(--good)"
+                  : emotion === "anger" ? "var(--bad)"
+                  : (emotion==="stress"||emotion==="fear") ? "var(--warn)" : "var(--accent)";
+      barEl.style.background = `linear-gradient(90deg, ${color}, var(--primary))`;
+    }
+
+    function setCrisisTags(terms){
+      crisisTags.innerHTML = "";
+      if(!terms || !terms.length) return;
+      terms.forEach(t=>{
+        const b = document.createElement("span");
+        b.className = "badge";
+        b.textContent = "⚠ " + t;
+        crisisTags.appendChild(b);
+      });
+    }
+
+    function toggleTyping(show){ typingEl.classList.toggle("active", !!show); }
+
+    // --- Simple mood chart ---
+    const canvas = document.getElementById("moodChart");
+    const ctx = canvas ? canvas.getContext("2d") : null;
+
+    function drawChart(){
+      if(!ctx || !canvas) return;
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+
+      // background
+      ctx.fillStyle = "rgba(255,255,255,0.02)";
+      ctx.fillRect(0,0,w,h);
+
+      // axes
+      ctx.strokeStyle = "rgba(226,232,240,0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(35, h-20); ctx.lineTo(w-10, h-20); // x
+      ctx.moveTo(35, 10); ctx.lineTo(35, h-20);     // y
+      ctx.stroke();
+
+      // grid + labels
+      ctx.fillStyle = "rgba(226,232,240,0.7)";
+      ctx.font = "11px ui-monospace, monospace";
+      const yVals = [-2,-1,0,1,2];
+      yVals.forEach(v=>{
+        const y = mapY(v, h);
+        ctx.strokeStyle = "rgba(226,232,240,0.08)";
+        ctx.beginPath(); ctx.moveTo(35, y); ctx.lineTo(w-10, y); ctx.stroke();
+        ctx.fillText(v.toString(), 12, y+4);
+      });
+
+      const points = history.slice(-20);
+      if(points.length === 0){
+        ctx.fillStyle = "rgba(226,232,240,0.6)";
+        ctx.fillText("No history yet — send a message.", 40, h/2);
+        return;
+      }
+
+      const xStep = (w - 50) / Math.max(1, points.length-1);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#22d3ee";
+      ctx.beginPath();
+      points.forEach((p, i)=>{
+        const x = 35 + i*xStep;
+        const y = mapY(emotionScore[p.emotion] ?? 0, h);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      // points
+      points.forEach((p, i)=>{
+        const x = 35 + i*xStep;
+        const y = mapY(emotionScore[p.emotion] ?? 0, h);
+        const color = p.emotion === "joy" ? "#10b981"
+                    : p.emotion === "anger" ? "#ef4444"
+                    : (p.emotion==="stress"||p.emotion==="fear") ? "#f59e0b" : "#4f7cff";
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+      });
+
+      function mapY(val, H){
+        const top = 10, bottom = H-20;
+        const t = (val + 2) / 4; // map -2..2 -> 0..1
+        return bottom - t * (bottom - top);
+      }
+    }
+
+    formEl.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const text = inputEl.value.trim();
+      if(!text) return;
+      addMsg(text,"user");
+      inputEl.value = "";
+      toggleTyping(true);
+      try{
+        const t0 = performance.now();
+        const res = await fetch(API_BASE + "/predict/text", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({text})
+        });
+        const data = await res.json();
+        const t1 = performance.now();
+        latencyEl.textContent = Math.max(1, Math.round(t1 - t0)) + " ms";
+        setEmotion(data.emotion, data.confidence);
+        pushHistory(data.emotion || "neutral", data.confidence || 0.5);
+        setCrisisTags(data.crisis_terms || []);
+        addMsg(data.reply || "I’m here with you.", "bot");
+      }catch(err){
+        addMsg("Sorry, I couldn't reach the server. Is the backend running?", "bot");
+        setHealth(false);
+      }finally{
+        toggleTyping(false);
+      }
+    });
+
+    document.getElementById("clear").addEventListener("click", ()=>{
+      messagesEl.innerHTML = '';
+      addMsg("Chat cleared. How are you feeling now?", "bot");
+      setEmotion("neutral", 0);
+      setCrisisTags([]);
+    });
+
+    document.getElementById("clearHistory")?.addEventListener("click", ()=>{
+      history = [];
+      saveHistory();
+      drawChart();
+    });
+
+    // Quick prompts
+    document.querySelectorAll('.btn.secondary[data-prompt]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        inputEl.value = btn.getAttribute('data-prompt');
+        inputEl.focus();
+      });
+    });
+
+    // --- Mic capture: record ~3s and POST to /predict/voice ---
+    let mediaRecorder, chunks=[];
+    async function startMic(){
+      try{
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        chunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+        mediaRecorder.onstop = async ()=>{
+          const blob = new Blob(chunks, { type: "audio/webm" });
+          const form = new FormData();
+          form.append("file", blob, "voice.webm");
+
+          toggleTyping(true);
+          addMsg("🎙️ Processing your voice note…", "bot");
+          try{
+            const t0 = performance.now();
+            const res = await fetch(API_BASE + "/predict/voice", { method:"POST", body: form });
+            const data = await res.json();
+            const t1 = performance.now();
+            latencyEl.textContent = Math.max(1, Math.round(t1 - t0)) + " ms";
+
+            setEmotion(data.emotion, data.confidence);
+            pushHistory(data.emotion || "neutral", data.confidence || 0.4);
+            addMsg(data.note ? `Voice: ${data.note}` : "Voice processed.", "bot");
+          }catch(err){
+            addMsg("Sorry, I couldn't process the audio.", "bot");
+          }finally{
+            toggleTyping(false);
+            stream.getTracks().forEach(t=>t.stop());
+          }
+        };
+
+        mediaRecorder.start();
+        addMsg("🎙️ Recording… release in ~3 seconds.", "bot");
+        setTimeout(()=> mediaRecorder.stop(), 3000);
+      }catch(err){
+        addMsg("Microphone permission denied.", "bot");
+      }
+    }
+    document.getElementById("micBtn")?.addEventListener("click", startMic);
+
+    // Initial
+    function init(){
+      addMsg("Hello! You can also try the Quick Emotions buttons on the right.", "bot");
+      checkHealth();
+      setInterval(checkHealth, 8000);
+      loadHistory();
+      drawChart();
+    }
+    init();
+  </script>
+</body>
+</html>
